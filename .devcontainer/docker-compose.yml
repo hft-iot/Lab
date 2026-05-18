@@ -55,6 +55,20 @@ services:
       - GF_SECURITY_ADMIN_USER=admin
       - GF_SECURITY_ADMIN_PASSWORD=MyPass@word
 
+  homeassistant:
+    image: homeassistant/home-assistant:stable
+    container_name: homeassistant
+    depends_on:
+      - mqtt
+    ports:
+      - "8123:8123"
+    volumes:
+      - /config:/config
+      - /etc/localtime:/etc/localtime:ro
+      - /run/dbus:/run/dbus:ro
+    restart: unless-stopped
+    privileged: true
+
 configs:
   mosquitto_config:
     file: ./mosquitto.conf
