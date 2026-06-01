@@ -27,7 +27,7 @@ namespace MqttSenders
                 .Build();
             await mqttClient.ConnectAsync(mqttClientOptions, CancellationToken.None);
 
-            var discoveryMessageLoop = StartDiscoveryMessageLoop(mqttClient, stoppingToken);
+            _ = StartDiscoveryMessageLoop(mqttClient, stoppingToken);
 
             mqttClient.ApplicationMessageReceivedAsync += HandleIncomingMessageEvent;
             await mqttClient.SubscribeAsync(
@@ -122,7 +122,7 @@ namespace MqttSenders
                                 ],
                             ""name"":""TemperatureSimulator""
                         },
-                        ""value_template"": ""{{ value_json.Value | round(2) }}"",
+                        ""value_template"": ""{{ value_json.Message | round(2) }}"",
                         ""max"": 200,
                         ""min"": -100,
                         ""unit_of_measurement"": ""°C""
