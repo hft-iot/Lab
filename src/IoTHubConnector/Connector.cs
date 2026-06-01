@@ -2,6 +2,7 @@
 using System.Text.Json;
 using Interfaces;
 using Microsoft.Azure.Devices.Client;
+using Microsoft.Azure.Devices.Shared;
 using Microsoft.Extensions.Logging;
 
 namespace IoTHubConnector
@@ -20,6 +21,10 @@ namespace IoTHubConnector
                 config.IotHubConnectionString
             );
             this.deviceClient.SetReceiveMessageHandlerAsync(MessageHandler, null);
+            this.deviceClient.SetDesiredPropertyUpdateCallbackAsync(
+                DesiredPropertiesChangedHandler,
+                null
+            );
         }
 
         public async Task SendMessageToCloudAsync<T>(IotMessage<T> messageToSend)
@@ -39,6 +44,35 @@ namespace IoTHubConnector
             await deviceClient.CompleteAsync(message);
 
             return MessageResponse.Completed;
+        }
+
+        public event EventHandler<ControlTemperatureReceivedEventArgs>? ControlTemperatureReceived;
+
+        private Task DesiredPropertiesChangedHandler(
+            TwinCollection desiredProperties,
+            object userContext
+        )
+        {
+            var status = "failed";
+            if (decimal.TryParse(desiredProperties["temperature"], out decimal desiredTemperature))
+            {
+                status = "successful";
+            }
+
+            // Raise ControlTemperatureReceived here once desiredTemperature changes should be forwarded into the app.
+            // ControlTemperatureReceived?.Invoke(this, new ControlTemperatureReceivedEventArgs(parsedDesiredTemperature));
+
+            var reportedPropertyConfirmation = new
+            {
+                desiredTemperature = new ReportedProperty<decimal>(
+                    desiredTemperature,
+                    status,
+                    new DesiredTemperatureReportedTimestamp(DateTimeOffset.UtcNow)
+                ),
+            };
+
+            // Use deviceClient.UpdateReportedPropertiesAsync(...) to upload the prepared confirmation as reported properties.
+            return Task.CompletedTask;
         }
 
         private static Message ConvertIotMessageToHubMessage<T>(IotMessage<T> messageToSend)
@@ -76,4 +110,22 @@ namespace IoTHubConnector
 
         public ControlMessage Message { get; init; }
     }
+
+    public class ControlTemperatureReceivedEventArgs : EventArgs
+    {
+        public ControlTemperatureReceivedEventArgs(decimal temperature)
+        {
+            Temperature = temperature;
+        }
+
+        public decimal Temperature { get; init; }
+    }
+
+    public record ReportedProperty<T>(
+        T? Value,
+        string Status,
+        DesiredTemperatureReportedTimestamp Timestamp
+    );
+
+    public record DesiredTemperatureReportedTimestamp(DateTimeOffset Utc);
 }
