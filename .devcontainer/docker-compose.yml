@@ -69,6 +69,25 @@ services:
     restart: unless-stopped
     privileged: true
 
+  hawkbit:
+    image: hawkbit/hawkbit-update-server:latest
+    container_name: hawkbit
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+    privileged: true
+  hawkbitui:
+    image: hawkbit/hawkbit-ui:latest
+    container_name: hawkbitui
+    depends_on:
+      - hawkbit
+    environment:
+      - 'SPRING_APPLICATION_JSON={"hawkbit.server.mgmtUrl": "http://hawkbit:8080"}'
+    ports:
+      - 8088:8088
+    restart: unless-stopped
+    privileged: true
+
 configs:
   mosquitto_config:
     file: ./mosquitto.conf

@@ -9,7 +9,7 @@ namespace IoTHubConnector
 {
     public class Connector
     {
-        private readonly DeviceClient deviceClient;
+        private readonly DeviceClient? deviceClient;
         private readonly ILogger<Connector> logger;
 
         public event EventHandler<ControlMessageReceivedEventArgs>? ControlMessageReceived;
@@ -17,6 +17,15 @@ namespace IoTHubConnector
         public Connector(ILogger<Connector> logger, ConnectorConfig config)
         {
             this.logger = logger;
+
+            if (!config.IotHubConnectionString.Contains("HostName", StringComparison.OrdinalIgnoreCase))
+            {
+                logger.LogWarning(
+                    "IoTHubConnectionString is not valid. IoTHubConnector will not be initialized."
+                );
+                return;
+            }
+
             this.deviceClient = DeviceClient.CreateFromConnectionString(
                 config.IotHubConnectionString
             );
@@ -29,6 +38,8 @@ namespace IoTHubConnector
 
         public async Task SendMessageToCloudAsync<T>(IotMessage<T> messageToSend)
         {
+            if (deviceClient is null) return;
+
             logger.LogInformation("received Message. Forwarding to IoTHub");
             await deviceClient.SendEventAsync(ConvertIotMessageToHubMessage(messageToSend));
             logger.LogInformation("Succesfully forwarded to IoTHub");

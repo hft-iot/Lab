@@ -17,13 +17,7 @@
       "dockerDashComposeVersion": "none"
     }
   },
-  "forwardPorts": [
-    1883,
-    9001,
-    3000,
-    8123,
-    8086
-  ],
+  "forwardPorts": [1883, 9001, 3000, 8123, 8080, 8086, 8088],
   "portsAttributes": {
     "1883": {
       "label": "MQTT",
@@ -43,6 +37,14 @@
     },
     "8123": {
       "label": "Home Assistant",
+      "onAutoForward": "notify"
+    },
+    "8080": {
+      "label": "Hawkbit",
+      "onAutoForward": "notify"
+    },
+    "8088": {
+      "label": "Hawkbit Admin",
       "onAutoForward": "notify"
     }
   },
