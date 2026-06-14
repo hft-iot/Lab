@@ -18,5 +18,10 @@ if (senders.Any(sender => sender.Equals("MQTT Simulator")))
     builder.Services.AddHostedService<MqttDeviceSimulator>();
 }
 
+if (senders.Any(sender => sender.Equals("MQTT Rogue Simulator")))
+{
+    builder.Services.AddHostedService<RogueMqttDeviceSimulator>();
+}
+
 var host = builder.Build();
 await host.RunAsync();

@@ -12,10 +12,13 @@ services:
     container_name: mqtt
     ports:
       - "1883:1883"
+      - "8883:8883"
       - "9001:9001"
     configs:
       - source: mosquitto_config
         target: /mosquitto/config/mosquitto.conf
+    volumes:
+      - ./certs:/mosquitto/certs:ro
 
   telegraf:
     image: telegraf:latest

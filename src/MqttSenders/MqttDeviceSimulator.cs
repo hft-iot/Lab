@@ -13,8 +13,8 @@ namespace MqttSenders
     ) : BackgroundService
     {
         private readonly ILogger<MqttDeviceSimulator> _logger = logger;
-        private readonly string _mqttHost =
-            configuration.GetValue<string>("MqttHost") ?? "localhost";
+        private readonly MqttConnectionSettings _mqttConnectionSettings =
+            MqttConnectionSettings.FromConfiguration(configuration.GetSection("MqttConnection"));
         private readonly Random _random = new();
         private readonly MqttClientFactory _mqttFactory = new();
         private bool _heatingMode = true;
@@ -22,9 +22,15 @@ namespace MqttSenders
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
             using var mqttClient = _mqttFactory.CreateMqttClient();
-            var mqttClientOptions = new MqttClientOptionsBuilder()
-                .WithTcpServer(_mqttHost, 1883)
-                .Build();
+            var mqttClientOptions = MqttClientOptionsFactory.Create(_mqttConnectionSettings);
+
+            _logger.LogInformation(
+                "Connecting MQTT simulator to {Host}:{Port} (TLS: {UseTls})",
+                _mqttConnectionSettings.Host,
+                _mqttConnectionSettings.Port,
+                _mqttConnectionSettings.UseTls
+            );
+
             await mqttClient.ConnectAsync(mqttClientOptions, CancellationToken.None);
 
             _ = StartDiscoveryMessageLoop(mqttClient, stoppingToken);

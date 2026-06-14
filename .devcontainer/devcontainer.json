@@ -17,10 +17,23 @@
       "dockerDashComposeVersion": "none"
     }
   },
-  "forwardPorts": [1883, 9001, 3000, 8123, 8080, 8086, 8088],
+  "forwardPorts": [
+    1883,
+    8883,
+    9001,
+    3000,
+    8123,
+    8080,
+    8086,
+    8088
+  ],
   "portsAttributes": {
     "1883": {
       "label": "MQTT",
+      "onAutoForward": "notify"
+    },
+    "8883": {
+      "label": "MQTT TLS",
       "onAutoForward": "notify"
     },
     "9001": {
