@@ -89,18 +89,55 @@ namespace MqttSenders
                 );
             }
 
-            var resolvedPath = Path.IsPathRooted(path)
-                ? path
-                : Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), path));
+            var resolvedPath = ResolveExistingPath(path);
 
-            if (!File.Exists(resolvedPath))
+            if (resolvedPath is null)
             {
                 throw new FileNotFoundException(
-                    $"The configured certificate file '{resolvedPath}' does not exist."
+                    $"The configured certificate file '{path}' does not exist when resolved from either the current directory or the project root."
                 );
             }
 
             return resolvedPath;
+        }
+
+        private static string? ResolveExistingPath(string path)
+        {
+            if (Path.IsPathRooted(path))
+            {
+                return File.Exists(path) ? path : null;
+            }
+
+            var candidatePaths = new List<string>
+            {
+                Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), path)),
+            };
+
+            var projectRoot = FindProjectRoot();
+            if (projectRoot is not null)
+            {
+                candidatePaths.Add(Path.GetFullPath(Path.Combine(projectRoot, path)));
+            }
+
+            return candidatePaths.FirstOrDefault(File.Exists);
+        }
+
+        private static string? FindProjectRoot()
+        {
+            var projectFileName = $"{typeof(MqttClientOptionsFactory).Assembly.GetName().Name}.csproj";
+            var directory = new DirectoryInfo(AppContext.BaseDirectory);
+
+            while (directory is not null)
+            {
+                if (File.Exists(Path.Combine(directory.FullName, projectFileName)))
+                {
+                    return directory.FullName;
+                }
+
+                directory = directory.Parent;
+            }
+
+            return null;
         }
 
         private static bool ValidateServerCertificate(
